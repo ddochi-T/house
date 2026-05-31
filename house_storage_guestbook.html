@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🏠 살림 창고</title>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f7f4ef;
+    --card: #ffffff;
+    --border: #e8e0d4;
+    --text: #2c2416;
+    --sub: #8c7b65;
+    --accent1: #e8845a;
+    --accent2: #5a9e7a;
+    --accent3: #5a7fbe;
+    --accent4: #c25a8a;
+    --tab-active: #2c2416;
+    --shadow: 0 2px 12px rgba(44,36,22,0.08);
+    --radius: 14px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--text);
+    color: #f7f4ef;
+    padding: 20px 24px 16px;
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 {
+    font-family: 'Gowun Dodum', serif;
+    font-size: 1.5rem;
+    letter-spacing: -.5px;
+  }
+  header p { font-size: .78rem; color: #b8a98e; margin-top: 2px; }
+
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--text);
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+  .tab-btn {
+    border: none; background: none; cursor: pointer;
+    color: #9a8a74;
+    padding: 10px 16px 14px;
+    font-size: .83rem;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 500;
+    white-space: nowrap;
+    border-bottom: 3px solid transparent;
+    transition: all .2s;
+  }
+  .tab-btn.active {
+    color: #f7f4ef;
+    border-bottom-color: var(--accent1);
+  }
+
+  main { padding: 20px 16px 100px; max-width: 680px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; animation: fadeIn .25s ease; }
+
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  .summary-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+  .summary-card {
+    background: var(--card); border-radius: var(--radius); padding: 14px 12px;
+    text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .summary-card .emoji { font-size: 1.5rem; }
+  .summary-card .num { font-size: 1.4rem; font-weight: 700; margin: 4px 0 2px; }
+  .summary-card .label { font-size: .7rem; color: var(--sub); }
+
+  .add-card {
+    background: var(--card); border-radius: var(--radius); padding: 18px;
+    box-shadow: var(--shadow); border: 1px solid var(--border); margin-bottom: 20px;
+  }
+  .add-card h3 { font-size: .9rem; margin-bottom: 14px; display: flex; align-items: center; gap: 6px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: .72rem; color: var(--sub); font-weight: 500; }
+  .form-group input, .form-group select, .form-group textarea {
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 9px 11px;
+    font-size: .85rem; font-family: 'Noto Sans KR', sans-serif; background: var(--bg);
+    width: 100%;
+  }
+  .form-group textarea {
+    min-height: 96px;
+    resize: vertical;
+    line-height: 1.55;
+  }
+
+  .btn-add {
+    width: 100%; padding: 11px; border: none; border-radius: 9px;
+    background: var(--text); color: #f7f4ef; font-weight: 500; cursor: pointer;
+    margin-top: 10px;
+  }
+
+  .filter-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .filter-row input {
+    border: 1.5px solid var(--border); border-radius: 8px; padding: 8px 11px;
+    font-size: .82rem; background: var(--card); flex: 1;
+  }
+
+  .item-list { display: flex; flex-direction: column; gap: 8px; }
+  .item-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 16px; display: grid; grid-template-columns: auto 1fr auto;
+    align-items: center; gap: 12px; box-shadow: var(--shadow); position: relative;
+  }
+
+  .item-emoji { font-size: 1.8rem; }
+  .item-info .item-name { font-size: .95rem; font-weight: 700; }
+  .item-info .item-meta { font-size: .72rem; color: var(--sub); margin-top: 3px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .item-info .item-meta span { background: var(--bg); padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border); }
+
+  .qty-control {
+    display: flex; align-items: center; background: var(--bg);
+    border: 1.5px solid var(--border); border-radius: 20px; overflow: hidden;
+  }
+  .qty-btn { border: none; background: none; cursor: pointer; width: 28px; height: 26px; font-weight: 700; }
+  .qty-num { font-size: .82rem; font-weight: 700; min-width: 36px; text-align: center; }
+
+  .status-badge { font-size: .68rem; padding: 2px 8px; border-radius: 20px; font-weight: 500; text-align: center; margin-top: 4px;}
+  .status-plenty { background: #d4f0e0; color: #2d7a4e; }
+  .status-low    { background: #fde8d0; color: #c45a1a; }
+  .status-out    { background: #fdd4d4; color: #b52020; }
+
+  .btn-del { border: none; background: none; cursor: pointer; color: #ccc; font-size: .85rem; margin-top: 4px;}
+
+  .guestbook-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .guestbook-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 8px; }
+  .guestbook-writer { font-weight: 700; font-size: .9rem; }
+  .guestbook-date { color: var(--sub); font-size: .7rem; white-space: nowrap; }
+  .guestbook-message { font-size: .86rem; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .guestbook-empty {
+    background: var(--card); border: 1px dashed var(--border); border-radius: var(--radius);
+    padding: 26px 18px; text-align: center; color: var(--sub); font-size: .84rem;
+  }
+
+  .expiry-warn { border-left: 4px solid var(--accent1) !important; }
+  .alert-banner { background: #fff8f2; border: 1.5px solid #f0c8a0; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 18px; display: none; }
+  .alert-banner.show { display: block; }
+
+  .appliance-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
+  .appliance-top { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .days-bar-wrap { height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; margin: 8px 0 6px; }
+  .days-bar { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+  .loading-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(247, 244, 239, 0.9); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; z-index: 1000;
+  }
+  
+  .toast {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: #f7f4ef; padding: 10px 20px; border-radius: 30px;
+    font-size: .82rem; opacity: 0; transition: all .3s; z-index: 999;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 400px) { .form-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading-overlay">
+  <div style="font-size: 2rem;">🏠</div>
+  <p style="margin-top: 10px; font-weight: 500;">서버 연결 중...</p>
+</div>
+
+<header>
+  <h1>🏠 살림 창고</h1>
+  <p>실시간 클라우드 모드</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" id="btn-daily" onclick="switchTab('daily')">🧴 생필품</button>
+  <button class="tab-btn" id="btn-food" onclick="switchTab('food')">🥦 식재료</button>
+  <button class="tab-btn" id="btn-appliance" onclick="switchTab('appliance')">🏠 가전청소</button>
+  <button class="tab-btn" id="btn-guestbook" onclick="switchTab('guestbook')">💬 방명록</button>
+  <button class="tab-btn" id="btn-stats" onclick="switchTab('stats')">📊 현황</button>
+</div>
+
+<main>
+  <!-- 생필품 탭 -->
+  <div class="tab-panel active" id="tab-daily">
+    <div class="summary-row" id="daily-summary"></div>
+    <div class="add-card">
+      <h3>➕ 생필품 추가</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>품목명 *</label><input id="d-name" type="text" placeholder="예) 주방세제"></div>
+        <div class="form-group">
+          <label>카테고리</label>
+          <select id="d-cat">
+            <option value="세제">🧼 세제류</option><option value="위생">🪥 위생용품</option>
+            <option value="청소">🧹 청소용품</option><option value="욕실">🚿 욕실용품</option>
+            <option value="주방">🍳 주방용품</option><option value="기타">📦 기타</option>
+          </select>
+        </div>
+        <div class="form-group"><label>수량</label><input id="d-qty" type="number" value="1" min="0"></div>
+        <div class="form-group">
+          <label>단위</label>
+          <select id="d-unit">
+            <option>개</option><option>통</option><option>박스</option>
+            <option>봉</option><option>병</option><option>묶음</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addItem('daily')">추가하기</button>
+    </div>
+    <div class="filter-row">
+      <input type="text" id="d-search" placeholder="🔍 검색..." oninput="renderList('daily')">
+    </div>
+    <div class="item-list" id="daily-list"></div>
+  </div>
+
+  <!-- 식재료 탭 -->
+  <div class="tab-panel" id="tab-food">
+    <div id="expiry-alert" class="alert-banner">
+      <h4>⚠️ 소비기한 임박 품목</h4>
+      <ul id="expiry-list"></ul>
+    </div>
+    <div class="summary-row" id="food-summary"></div>
+    <div class="add-card">
+      <h3>➕ 식재료 추가</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>품목명 *</label><input id="f-name" type="text"></div>
+        <div class="form-group">
+          <label>카테고리</label>
+          <select id="f-cat">
+            <option value="채소">🥦 채소</option><option value="육류">🥩 육류</option>
+            <option value="유제품">🧀 유제품</option><option value="냉동">🧊 냉동</option>
+            <option value="기타">📦 기타</option>
+          </select>
+        </div>
+        <div class="form-group"><label>수량</label><input id="f-qty" type="number" value="1"></div>
+        <div class="form-group"><label>소비기한</label><input id="f-expiry" type="date"></div>
+      </div>
+      <button class="btn-add" onclick="addItem('food')">추가하기</button>
+    </div>
+    <div class="item-list" id="food-list"></div>
+  </div>
+
+  <!-- 가전청소 탭 -->
+  <div class="tab-panel" id="tab-appliance">
+    <div class="add-card">
+      <h3>➕ 가전 추가</h3>
+      <div class="form-grid">
+        <input id="a-name" type="text" placeholder="기기명" style="grid-column: span 2; padding: 10px; border: 1.5px solid var(--border); border-radius: 8px;">
+      </div>
+      <button class="btn-add" onclick="addAppliance()">기기 등록</button>
+    </div>
+    <div class="item-list" id="appliance-list"></div>
+  </div>
+
+  <!-- 방명록 탭: 기존 daily/food/appliance 컬렉션과 분리된 guestbook 컬렉션만 사용 -->
+  <div class="tab-panel" id="tab-guestbook">
+    <div class="add-card">
+      <h3>💬 방명록 남기기</h3>
+      <div class="form-grid">
+        <div class="form-group"><label>이름</label><input id="g-name" type="text" placeholder="예) 또치쌤"></div>
+        <div class="form-group"><label>표시</label><input type="text" value="실시간 저장" disabled></div>
+        <div class="form-group" style="grid-column: span 2;">
+          <label>메시지 *</label>
+          <textarea id="g-message" maxlength="300" placeholder="따뜻한 한 줄을 남겨주세요. 최대 300자"></textarea>
+        </div>
+      </div>
+      <button class="btn-add" onclick="addGuestbook()">방명록 남기기</button>
+    </div>
+    <div class="summary-row">
+      <div class="summary-card"><div class="emoji">💬</div><div class="num" id="guestbook-count">0</div><div class="label">방명록</div></div>
+      <div class="summary-card"><div class="emoji">🕒</div><div class="num" id="guestbook-today">0</div><div class="label">오늘 작성</div></div>
+      <div class="summary-card"><div class="emoji">✨</div><div class="num" id="guestbook-latest">—</div><div class="label">최근 작성</div></div>
+    </div>
+    <div class="item-list" id="guestbook-list"></div>
+  </div>
+
+  <!-- 현황 탭 -->
+  <div class="tab-panel" id="tab-stats">
+    <div id="stats-content"></div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+  import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot, query, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+  // 사용자가 제공한 설정값을 반영합니다.
+  let firebaseConfig;
+  try {
+    firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+       apiKey: "AIzaSyBsl27V7l-8Ya9EAFiVcBpsUXco7aFMzI4",
+       authDomain: "house-63a47.firebaseapp.com",
+       projectId: "house-63a47",
+       storageBucket: "house-63a47.firebasestorage.app",
+       messagingSenderId: "1036669403006",
+       appId: "1:1036669403006:web:783dd55da16f14c83fbd2f"
+    };
+  } catch(e) {
+    console.error("Firebase config parsing error", e);
+  }
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const appId = typeof __app_id !== 'undefined' ? __app_id : 'my-home-storage-unique-id';
+
+  let currentTab = 'daily';
+  let data = { daily: [], food: [], appliance: [], guestbook: [] };
+  let userId = null;
+
+  async function initAuth() {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (e) {
+      console.error("인증 에러:", e);
+      showToast("서버 연결 실패. 설정을 확인하세요.");
+    }
+  }
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      userId = user.uid;
+      document.getElementById('loading').style.display = 'none';
+      setupListeners();
+    }
+  });
+
+  function setupListeners() {
+    // 기존 저장 데이터(daily, food, appliance)는 그대로 두고, 방명록은 별도 guestbook 컬렉션으로만 분리 저장합니다.
+    ['daily', 'food', 'appliance', 'guestbook'].forEach(colName => {
+      const q = query(collection(db, 'artifacts', appId, 'public', 'data', colName));
+      onSnapshot(q, (snapshot) => {
+        data[colName] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        refreshUI();
+        if (colName === 'food') checkExpiry();
+      }, (err) => {
+        console.error(`Listener error (${colName}):`, err);
+        if(err.code === 'permission-denied') showToast("데이터베이스 보안 규칙을 확인해주세요!");
+      });
+    });
+  }
+
+  function refreshUI() {
+    if (currentTab === 'daily' || currentTab === 'food') renderList(currentTab);
+    if (currentTab === 'appliance') renderAppliance();
+    if (currentTab === 'guestbook') renderGuestbook();
+    if (currentTab === 'stats') renderStats();
+  }
+
+  window.switchTab = (tab) => {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(`btn-${tab}`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    refreshUI();
+  };
+
+  window.addItem = async (type) => {
+    if (!userId) return;
+    const p = type === 'daily' ? 'd' : 'f';
+    const name = document.getElementById(p+'-name').value.trim();
+    if (!name) return showToast("품목명을 입력하세요");
+    
+    const qty = parseFloat(document.getElementById(p+'-qty').value) || 1;
+    const itemData = {
+      name,
+      cat: document.getElementById(p+'-cat').value,
+      qty,
+      unit: type === 'daily' ? document.getElementById('d-unit').value : '개',
+      date: new Date().toISOString().split('T')[0],
+      updatedAt: Date.now()
+    };
+    if (type === 'food') itemData.expiry = document.getElementById('f-expiry').value;
+    
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', type, Date.now().toString()), itemData);
+      document.getElementById(p+'-name').value = '';
+      showToast(`${name} 추가 완료!`);
+    } catch(e) {
+      showToast("저장 실패!");
+    }
+  };
+
+  window.changeQty = async (type, id, delta) => {
+    const item = data[type].find(i => i.id === id);
+    if (!item) return;
+    try {
+      await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', type, id), { 
+        qty: Math.max(0, item.qty + delta) 
+      });
+    } catch(e) { console.error(e); }
+  };
+
+  window.deleteItem = async (type, id) => {
+    if(confirm("정말 삭제하시겠습니까?")) {
+      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', type, id));
+    }
+  };
+
+  window.addAppliance = async () => {
+    const name = document.getElementById('a-name').value.trim();
+    if (!name) return;
+    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appliance', Date.now().toString()), { 
+      name, lastCleaned: '', createdAt: Date.now() 
+    });
+    document.getElementById('a-name').value = '';
+  };
+
+  window.addGuestbook = async () => {
+    if (!userId) return showToast("서버 연결 후 다시 시도하세요");
+    const writer = document.getElementById('g-name').value.trim() || '익명';
+    const message = document.getElementById('g-message').value.trim();
+    if (!message) return showToast("방명록 내용을 입력하세요");
+
+    const now = Date.now();
+    const entryData = {
+      writer: writer.slice(0, 20),
+      message: message.slice(0, 300),
+      createdAt: now,
+      date: new Date(now).toISOString().split('T')[0],
+      userId
+    };
+
+    try {
+      await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'guestbook', now.toString()), entryData);
+      document.getElementById('g-message').value = '';
+      showToast("방명록을 남겼어요!");
+    } catch(e) {
+      console.error(e);
+      showToast("방명록 저장 실패!");
+    }
+  };
+
+  window.markCleaned = async (id) => {
+    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'appliance', id), { 
+      lastCleaned: new Date().toISOString().split('T')[0] 
+    });
+  };
+
+  function renderList(type) {
+    const container = document.getElementById(type + '-list');
+    const items = data[type];
+    const search = document.getElementById(type === 'daily' ? 'd-search' : 'f-search')?.value?.toLowerCase() || '';
+
+    let filtered = items.filter(i => i.name.toLowerCase().includes(search));
+
+    container.innerHTML = filtered.map(i => {
+      const status = i.qty === 0 ? 'out' : (i.qty === 1 ? 'low' : 'plenty');
+      const statusLabel = status === 'out' ? '소진' : (status === 'low' ? '부족' : '충분');
+      
+      return `
+        <div class="item-card ${type === 'food' && isNearExpiry(i.expiry) ? 'expiry-warn' : ''}">
+          <div class="item-emoji">${getEmoji(i.cat)}</div>
+          <div class="item-info">
+            <div class="item-name">${i.name}</div>
+            <div class="item-meta">
+              <span>🏷️ ${i.cat}</span>
+              ${i.expiry ? `<span>📅 ~${i.expiry}</span>` : ''}
+            </div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+            <div class="qty-control">
+              <button class="qty-btn" onclick="changeQty('${type}', '${i.id}', -1)">−</button>
+              <div class="qty-num">${i.qty}</div>
+              <button class="qty-btn" onclick="changeQty('${type}', '${i.id}', 1)">＋</button>
+            </div>
+            <div class="status-badge status-${status}">${statusLabel}</div>
+            <button class="btn-del" onclick="deleteItem('${type}', '${i.id}')">🗑️</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+    updateSummary(type);
+  }
+
+  function renderAppliance() {
+    const container = document.getElementById('appliance-list');
+    container.innerHTML = data.appliance.map(i => {
+      const days = i.lastCleaned ? Math.floor((new Date() - new Date(i.lastCleaned)) / 86400000) : null;
+      const barWidth = days === null ? 0 : Math.min(100, (days / 30) * 100);
+      return `
+        <div class="appliance-card" style="margin-bottom:10px">
+          <div class="appliance-top">
+            <div style="flex:1; font-weight:700">${i.name}</div>
+            <button class="btn-add" style="width:auto; padding:5px 12px; font-size:0.75rem;" onclick="markCleaned('${i.id}')">청소완료</button>
+            <button class="btn-del" onclick="deleteItem('appliance', '${i.id}')">🗑️</button>
+          </div>
+          <div style="font-size:1.4rem; font-weight:700;">${days !== null ? days : '—'}<span style="font-size:0.8rem; color:var(--sub); margin-left:4px;">일 경과</span></div>
+          <div class="days-bar-wrap"><div class="days-bar" style="width:${barWidth}%; background:${days>20?'var(--accent1)':'var(--accent2)'}"></div></div>
+          <div style="font-size:0.75rem; color:var(--sub)">마지막 청소: ${i.lastCleaned || '기록 없음'}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderGuestbook() {
+    const container = document.getElementById('guestbook-list');
+    if (!container) return;
+
+    const sorted = [...data.guestbook].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('guestbook-count').textContent = sorted.length;
+    document.getElementById('guestbook-today').textContent = sorted.filter(i => i.date === today).length;
+    document.getElementById('guestbook-latest').textContent = sorted[0] ? formatDateTime(sorted[0].createdAt) : '—';
+
+    if (!sorted.length) {
+      container.innerHTML = `<div class="guestbook-empty">아직 남겨진 방명록이 없어요.<br>첫 메시지를 남겨보세요 💬</div>`;
+      return;
+    }
+
+    container.innerHTML = sorted.map(i => `
+      <div class="guestbook-card">
+        <div class="guestbook-top">
+          <div>
+            <div class="guestbook-writer">${escapeHtml(i.writer || '익명')}</div>
+            <div class="guestbook-date">${formatDateTime(i.createdAt)}</div>
+          </div>
+          <button class="btn-del" onclick="deleteItem('guestbook', '${i.id}')">🗑️</button>
+        </div>
+        <div class="guestbook-message">${escapeHtml(i.message || '')}</div>
+      </div>
+    `).join('');
+  }
+
+  function renderStats() {
+    const d = data.daily, f = data.food;
+    const total = d.length + f.length;
+    const low = [...d, ...f].filter(i => i.qty <= 1).length;
+    document.getElementById('stats-content').innerHTML = `
+      <div class="summary-row">
+        <div class="summary-card"><div class="num">${total}</div><div class="label">총 품목</div></div>
+        <div class="summary-card"><div class="num" style="color:var(--accent1)">${low}</div><div class="label">보충 필요</div></div>
+        <div class="summary-card"><div class="num">${data.appliance.length}</div><div class="label">가전 기기</div></div>
+      </div>
+    `;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '날짜 없음';
+    const date = new Date(timestamp);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const minute = String(date.getMinutes()).padStart(2, '0');
+    return `${month}.${day} ${hour}:${minute}`;
+  }
+
+  function getEmoji(cat) {
+    const map = { '세제':'🧼', '위생':'🪥', '청소':'🧹', '욕실':'🚿', '주방':'🍳', '채소':'🥦', '육류':'🥩', '유제품':'🧀', '냉동':'🧊', '기타':'📦' };
+    return map[cat] || '📦';
+  }
+  function isNearExpiry(date) { 
+    if (!date) return false; 
+    return (new Date(date) - new Date()) / 86400000 <= 3; 
+  }
+  function checkExpiry() {
+    const soon = data.food.filter(i => isNearExpiry(i.expiry));
+    const alertEl = document.getElementById('expiry-alert');
+    if (soon.length) {
+      alertEl.classList.add('show');
+      document.getElementById('expiry-list').innerHTML = soon.map(i => `<li><b>${i.name}</b>: 기한 임박</li>`).join('');
+    } else { alertEl.classList.remove('show'); }
+  }
+  function updateSummary(type) {
+    const el = document.getElementById(type + '-summary');
+    if (!el) return;
+    el.innerHTML = `
+      <div class="summary-card"><div class="num">${data[type].length}</div><div class="label">전체</div></div>
+      <div class="summary-card"><div class="num">${data[type].filter(i=>i.qty===1).length}</div><div class="label">부족</div></div>
+      <div class="summary-card"><div class="num">${data[type].filter(i=>i.qty===0).length}</div><div class="label">소진</div></div>
+    `;
+  }
+  function showToast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+
+  initAuth();
+</script>
+</body>
+</html>
